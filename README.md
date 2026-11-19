@@ -5,7 +5,7 @@ A Claude-style AI chat + Linux terminal workspace that runs locally through Dock
 ## Features
 
 - Responsive dark chat interface and a separate Linux terminal tab
-- AI tool-calling through an OpenAI-compatible Chat Completions API
+- AI tool-calling through Kilo Gateway using anonymous free-model access by default
 - Linux command execution inside a non-root Docker container
 - AI file creation/editing limited to persistent `/workspace`
 - Docker hardening: read-only root filesystem, dropped Linux capabilities, no-new-privileges, PID/memory/CPU limits
@@ -15,16 +15,8 @@ A Claude-style AI chat + Linux terminal workspace that runs locally through Dock
 
 1. Start Docker Desktop.
 2. Clone this repository or download it as a ZIP.
-3. Copy `.env.example` to `.env`.
-4. Set provider details in `.env`:
-
-```env
-AI_BASE_URL=https://api.openai.com/v1
-AI_API_KEY=your_api_key
-AI_MODEL=gpt-4o-mini
-```
-
-Use an OpenAI-compatible provider that supports Chat Completions and tool calling. Keep your real API key only in `.env`; never commit it.
+3. Copy `.env.example` to `.env`. The defaults use Kilo's anonymous free-model route; no API key is required.
+4. Optional: add a Kilo Gateway key to `AI_API_KEY` for authenticated access. Keep it only in `.env`; never commit it.
 
 5. In PowerShell, from the project folder, run:
 
@@ -44,7 +36,7 @@ Commands execute as an unprivileged user inside the app container. A strict comm
 
 ## Limitations
 
-- AI chat requires an API key and a provider/model supporting tool calling.
+- AI uses Kilo's anonymous `:free` model route by default. Free-model access is rate-limited and availability/model capabilities can change.
 - The terminal is intentionally restricted; arbitrary shell scripts, sudo and host control are not enabled.
 - This is a containerized Linux workspace, not a bootable Linux distribution.
 - File writes are limited to the workspace.
@@ -53,9 +45,9 @@ Commands execute as an unprivileged user inside the app container. A strict comm
 
 | Variable | Default | Description |
 |---|---|---|
-| `AI_BASE_URL` | OpenAI API URL | OpenAI-compatible API base |
-| `AI_API_KEY` | empty | Secret API key |
-| `AI_MODEL` | `gpt-4o-mini` | Model name |
+| `AI_BASE_URL` | `https://ai-gateway.kilo.ai/api/v1` | Kilo Gateway API base |
+| `AI_API_KEY` | empty | Optional Kilo key; blank uses anonymous free access |
+| `AI_MODEL` | `minimax/minimax-m2.1:free` | Kilo free model ID |
 | `WORKSPACE` | `/workspace` | Persistent working directory |
 | `MAX_STEPS` | `6` | Maximum tool rounds per request |
 | `COMMAND_TIMEOUT` | `20` | Per-command timeout in seconds |
