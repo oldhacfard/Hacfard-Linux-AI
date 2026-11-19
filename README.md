@@ -36,7 +36,7 @@ Commands execute as an unprivileged user inside the app container. A strict comm
 
 ## Limitations
 
-- AI uses Kilo's anonymous `:free` model route by default. Free-model access is rate-limited and availability/model capabilities can change.
+- AI uses Kilo's anonymous `:free` model route by default. Free-model access is rate-limited and availability/model capabilities can change. Kilo Auto Free may route prompts to upstream providers that log or use data to improve services; do not submit personal or confidential information.
 - The terminal is intentionally restricted; arbitrary shell scripts, sudo and host control are not enabled.
 - This is a containerized Linux workspace, not a bootable Linux distribution.
 - File writes are limited to the workspace.
@@ -47,7 +47,7 @@ Commands execute as an unprivileged user inside the app container. A strict comm
 |---|---|---|
 | `AI_BASE_URL` | `https://ai-gateway.kilo.ai/api/v1` | Kilo Gateway API base |
 | `AI_API_KEY` | empty | Optional Kilo key; blank uses anonymous free access |
-| `AI_MODEL` | `minimax/minimax-m2.1:free` | Kilo free model ID |
+| `AI_MODEL` | `kilo-auto/free` | Kilo Auto Free model ID |
 | `WORKSPACE` | `/workspace` | Persistent working directory |
 | `MAX_STEPS` | `6` | Maximum tool rounds per request |
 | `COMMAND_TIMEOUT` | `20` | Per-command timeout in seconds |
