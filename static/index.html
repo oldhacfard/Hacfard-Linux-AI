@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hacfard Linux AI</title>
+<style>
+:root{color-scheme:dark;--bg:#0b0c0f;--panel:#121419;--panel2:#191c23;--line:#292e38;--text:#f4f5f7;--muted:#9299a6;--blue:#77aaff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px Inter,system-ui,Segoe UI,sans-serif;height:100vh;display:flex}
+aside{width:245px;background:#0e1014;border-right:1px solid var(--line);padding:22px 16px;display:flex;flex-direction:column;gap:18px}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--blue)}
+.nav{padding:11px 12px;border:1px solid var(--line);border-radius:10px;color:#d9dce3;background:var(--panel);cursor:pointer;text-align:left}
+.note{margin-top:auto;color:var(--muted);font-size:12px;line-height:1.6}
+main{flex:1;min-width:0;display:flex;flex-direction:column}.top{height:62px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.status{color:var(--muted);font-size:12px}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#55c58a;margin-right:7px}
+.content{width:min(900px,100%);margin:auto;flex:1;display:flex;flex-direction:column;min-height:0;padding:26px 24px}
+.welcome{margin:auto 0;text-align:center}.welcome h1{font-size:clamp(28px,5vw,42px);letter-spacing:-1.5px;margin:0 0 12px}.welcome p{color:var(--muted)}
+.messages{overflow:auto;flex:1;display:flex;flex-direction:column;gap:18px;padding-bottom:20px}
+.msg{max-width:88%;padding:14px 16px;border:1px solid var(--line);border-radius:14px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}.user{align-self:flex-end;background:#1a2432}.assistant{align-self:flex-start;background:var(--panel)}
+.event{font:12px ui-monospace,monospace;color:#c4d5ed;background:#090b0e;border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:9px;white-space:pre-wrap}
+.composer{border:1px solid #343b48;background:var(--panel);border-radius:16px;padding:12px;display:flex;gap:10px;align-items:flex-end}
+textarea{flex:1;resize:none;background:transparent;color:var(--text);border:0;outline:0;min-height:48px;max-height:180px;font:inherit;padding:10px}
+button{border:0;border-radius:10px;padding:12px 17px;background:#e8edf5;color:#11151b;font-weight:700;cursor:pointer}button:disabled{opacity:.5}
+.hint{text-align:center;color:#707887;font-size:11px;margin-top:10px}
+#terminal{display:none;flex-direction:column;gap:12px;flex:1;min-height:0}.termout{background:#080a0d;border:1px solid var(--line);border-radius:12px;padding:15px;overflow:auto;flex:1;color:#d4e4d8;font:13px/1.6 ui-monospace,monospace;white-space:pre-wrap}.termrow{display:flex;gap:8px}.termrow input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px;color:white}
+@media(max-width:650px){aside{width:58px;padding:15px 8px}.brand{font-size:0}.brand:first-letter{font-size:20px}.nav{font-size:0;text-align:center;padding:12px 4px}.nav:first-letter{font-size:17px}.note{display:none}.top{padding:0 14px}.content{padding:18px 12px}.msg{max-width:96%}}
+</style></head>
+<body>
+<aside><div class="brand">HACFARD <span>AI</span></div><button class="nav" onclick="showChat()">✦　AI Sohbet</button><button class="nav" onclick="showTerminal()">⌘　Terminal</button><div class="note">Docker içinde izole Ubuntu/Python çalışma alanı.<br><br>Komutlar ana Windows sisteminde değil, konteyner içinde çalışır.</div></aside>
+<main><header class="top"><b id="pageTitle">AI Workspace</b><span class="status"><i class="dot"></i><span id="status">Bağlanıyor…</span></span></header>
+<section class="content">
+<div id="chat" style="display:flex;flex-direction:column;flex:1;min-height:0">
+<div class="welcome" id="welcome"><h1>Linux işlerini birlikte halledelim.</h1><p>Ne yapmak istediğini yaz. Komutları Docker içindeki Linux ortamında çalıştırırım.</p></div>
+<div class="messages" id="messages"></div>
+<div class="composer"><textarea id="prompt" placeholder="Örn: Çalışma alanındaki dosyaları listele…" rows="2"></textarea><button id="send" onclick="send()">Gönder ↑</button></div><div class="hint">Hacfard Linux AI · Komutlar izole Docker konteynerinde çalışır</div>
+</div>
+<div id="terminal"><div class="termout" id="termout">Hacfard Linux AI terminali hazır.
+Komutları /workspace içinde çalıştırır.</div><div class="termrow"><input id="cmd" placeholder="pwd, ls -la, uname -a…" onkeydown="if(event.key==='Enter')run()"><button onclick="run()">Çalıştır</button></div></div>
+</section></main>
+<script>
+const $=id=>document.getElementById(id);let history=[];
+async function health(){try{let r=await fetch('/api/health'),d=await r.json();$('status').textContent=d.ai_configured?'AI bağlı · '+d.model:'Terminal hazır · API anahtarı yok'}catch{$('status').textContent='Bağlantı yok'}}
+function showChat(){$('chat').style.display='flex';$('terminal').style.display='none';$('pageTitle').textContent='AI Workspace'}
+function showTerminal(){$('chat').style.display='none';$('terminal').style.display='flex';$('pageTitle').textContent='Linux Terminal'}
+function add(role,text,events=[]){$('welcome').style.display='none';let el=document.createElement('div');el.className='msg '+role;el.textContent=text;for(const e of events){let x=document.createElement('div');x.className='event';x.textContent=e.type==='command'?'$ '+e.input+'\n'+(e.output||e.error||''):'Dosya: '+(e.path||'')+' · '+(e.bytes||0)+' bayt';el.appendChild(x)}$('messages').appendChild(el);$('messages').scrollTop=$('messages').scrollHeight}
+async function send(){let text=$('prompt').value.trim();if(!text)return;add('user',text);$('prompt').value='';$('send').disabled=true;try{let r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,history})});let d=await r.json();if(!r.ok)throw Error(d.detail||'İstek başarısız');add('assistant',d.reply,d.events||[]);history.push({role:'user',content:text},{role:'assistant',content:d.reply});history=history.slice(-12)}catch(e){add('assistant','Hata: '+e.message)}finally{$('send').disabled=false}}
+async function run(){let c=$('cmd').value.trim();if(!c)return;$('cmd').value='';$('termout').textContent+='\n\n$ '+c+'\n';try{let r=await fetch('/api/terminal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command:c})});let d=await r.json();$('termout').textContent+=(d.output||d.error||'')+'\n';}catch(e){$('termout').textContent+=e.message+'\n'}}
+$('prompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});health();
+</script></body></html>
