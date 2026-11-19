@@ -15,9 +15,9 @@ from pydantic import BaseModel, Field
 APP_DIR = Path(__file__).resolve().parent.parent
 WORKSPACE = Path(os.getenv("WORKSPACE", "/workspace")).resolve()
 WORKSPACE.mkdir(parents=True, exist_ok=True)
-BASE_URL = os.getenv("AI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
-API_KEY = os.getenv("AI_API_KEY", "")
-MODEL = os.getenv("AI_MODEL", "gpt-4o-mini")
+BASE_URL = os.getenv("AI_BASE_URL", "https://ai-gateway.kilo.ai/api/v1").rstrip("/")
+API_KEY = os.getenv("AI_API_KEY", "").strip()
+MODEL = os.getenv("AI_MODEL", "minimax/minimax-m2.1:free")
 MAX_STEPS = min(int(os.getenv("MAX_STEPS", "6")), 10)
 TIMEOUT = min(int(os.getenv("COMMAND_TIMEOUT", "20")), 60)
 
@@ -107,11 +107,12 @@ TOOLS = [
 ]
 
 async def call_model(messages: list[dict[str, Any]]) -> dict[str, Any]:
-    if not API_KEY or API_KEY == "replace_me":
-        raise HTTPException(503, "AI anahtarı ayarlanmamış. .env dosyasına AI_API_KEY ekle.")
     url = BASE_URL + "/chat/completions"
+    headers = {"Content-Type": "application/json"}
+    if API_KEY and API_KEY != "replace_me":
+        headers["Authorization"] = f"Bearer {API_KEY}"
     async with httpx.AsyncClient(timeout=90) as client:
-        response = await client.post(url, headers={"Authorization": f"Bearer {API_KEY}"},
+        response = await client.post(url, headers=headers,
                                      json={"model": MODEL, "messages": messages, "tools": TOOLS, "tool_choice": "auto"})
         if response.status_code >= 400:
             raise HTTPException(502, f"AI sağlayıcısı hata verdi ({response.status_code}): {response.text[:600]}")
@@ -123,7 +124,8 @@ async def index():
 
 @app.get("/api/health")
 async def health():
-    return {"ok": True, "ai_configured": bool(API_KEY and API_KEY != "replace_me"),
+    return {"ok": True, "ai_configured": True, "provider": "Kilo Gateway",
+            "authentication": "api_key" if API_KEY and API_KEY != "replace_me" else "anonymous_free",
             "model": MODEL, "workspace": str(WORKSPACE)}
 
 @app.get("/api/files")
@@ -143,8 +145,6 @@ async def chat(body: ChatRequest):
     messages: list[dict[str, Any]] = [{"role": "system", "content": SYSTEM_PROMPT}, *history,
                                       {"role": "user", "content": body.message}]
     events = []
-    if not API_KEY or API_KEY == "replace_me":
-        return {"reply": "Arayüz ve Linux terminali hazır. AI sohbeti için .env dosyasına API anahtarını ekleyip yeniden başlat. Terminal sekmesinden komut çalıştırabilirsin.", "events": events}
     for _ in range(MAX_STEPS):
         assistant = await call_model(messages)
         messages.append(assistant)
