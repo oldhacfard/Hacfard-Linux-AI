@@ -17,7 +17,7 @@ WORKSPACE = Path(os.getenv("WORKSPACE", "/workspace")).resolve()
 WORKSPACE.mkdir(parents=True, exist_ok=True)
 BASE_URL = os.getenv("AI_BASE_URL", "https://ai-gateway.kilo.ai/api/v1").rstrip("/")
 API_KEY = os.getenv("AI_API_KEY", "").strip()
-MODEL = os.getenv("AI_MODEL", "minimax/minimax-m2.1:free")
+MODEL = os.getenv("AI_MODEL", "kilo-auto/free")
 MAX_STEPS = min(int(os.getenv("MAX_STEPS", "6")), 10)
 TIMEOUT = min(int(os.getenv("COMMAND_TIMEOUT", "20")), 60)
 
