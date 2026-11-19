@@ -1,0 +1,28 @@
+services:
+  hacfard-linux-ai:
+    build: .
+    container_name: hacfard-linux-ai
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      WORKSPACE: /workspace
+      MAX_STEPS: 6
+      COMMAND_TIMEOUT: 20
+    volumes:
+      - hacfard_workspace:/workspace
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 2
+
+volumes:
+  hacfard_workspace:
